@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banking thingo</title>
+    <link rel="stylesheet" href="https://unpkg.com/98.css">
+    <style>
+        :root {
+            --window-bg: #c0c0c0;
+            --window-border: #808080;
+            --window-highlight: #ffffff;
+            --window-shadow: #000000;
+            --title-bar: #000080;
+            --title-text: #ffffff;
+            --spending-color: #ff0000;
+            --income-color: #008000;
+        }
+
+        body {
+            background-color: #008080;
+            font-family: 'Tahoma', 'Geneva', 'sans-serif';
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .window {
+            margin-bottom: 20px;
+        }
+
+        .title-bar {
+            background: linear-gradient(to right, var(--title-bar), #1084d0);
+            color: var(--title-text);
+            padding: 4px 8px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .window-body {
+            padding: 12px;
+            background: var(--window-bg);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .balance-card {
+            background: var(--window-bg);
+            border: 2px solid;
+            border-color: var(--window-highlight) var(--window-shadow) var(--window-shadow) var(--window-highlight);
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .balance-card:hover {
+            background: #d4d4d4;
+        }
+
+        .balance-card.active {
+            border-color: #000080;
+            background: #d0d0d0;
+        }
+
+        .balance-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .balance-amount {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .spendings .balance-amount {
+            color: var(--spending-color);
+        }
+
+        .main .balance-amount {
+            color: var(--income-color);
+        }
+
+        .custom {
+            border-left: 4px solid;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input {
+            width: 200px;
+        }
+
+        .transaction-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background: #d4d4d4;
+            border: 1px solid #808080;
+            cursor: pointer;
+        }
+
+        .transaction-income {
+            border-left: 4px solid var(--income-color);
+        }
+
+        .transaction-spending {
+            border-left: 4px solid var(--spending-color);
+        }
+
+        .transaction-details {
+            flex: 1;
+        }
+
+        .transaction-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .transaction-meta {
+            font-size: 12px;
+            color: #555;
+        }
+
+        .transaction-amount {
+            font-weight: bold;
+            font-size: 16px;
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .income-amount {
+            color: var(--income-color);
+        }
+
+        .spending-amount {
+            color: var(--spending-color);
+        }
+
+        .edit-btn {
+            margin-left: 10px;
+        }
+
+        .popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .popup.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .popup-content {
+            width: 90%;
+            max-width: 500px;
+            transform: translateY(20px);
+            transition: transform 0.4s ease;
+        }
+
+        .popup.active .popup-content {
+            transform: translateY(0);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .repeating-section {
+            background: #d4d4d4;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .data-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .data-btn {
+            flex: 1;
+        }
+
+        .no-transactions {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #008080;
+            color: white;
+            padding: 5px;
+            text-align: center;
+            font-size: 14px;
+            z-index: 1000;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .status-bar.visible {
+            transform: translateY(0);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .action-button {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .delete-btn {
+            background: var(--spending-color);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .delete-btn:hover {
+            background: #cc0000;
+        }
+
+        .confirmation-popup .button {
+            margin: 0 5px;
+        }
+
+        .disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-grid .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-grid-full {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .data-controls {
+                flex-direction: column;
+            }
+
+            .search-container {
+                width: 100%;
+            }
+
+            .search-input {
+                width: 100%;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="window">
+            <div class="title-bar">
+                <span>Balances</span>
+            </div>
+            <div class="window-body">
+                <div class="dashboard">
+                    <div class="balance-card spendings" data-id="spendings">
+                        <div class="balance-name">Spendings</div>
+                        <div class="balance-amount" id="spendings-balance">$0.00</div>
+                    </div>
+
+                    <div class="balance-card main" data-id="main">
+                        <div class="balance-name">Income</div>
+                        <div class="balance-amount" id="main-balance">$0.00</div>
+                    </div>
+
+                    <div id="custom-balances-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="window">
+            <div class="title-bar">
+                <span>New Element</span>
+            </div>
+            <div class="window-body">
+                <div class="action-buttons">
+                    <button class="button action-button" id="income-btn">Add Income</button>
+                    <button class="button action-button" id="spending-btn">Add Spending</button>
+                    <button class="button action-button" id="balance-btn">Create Balance</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="window">
+            <div class="title-bar">
+                <span>Transaction History</span>
+            </div>
+            <div class="window-body">
+                <div class="section-header">
+                    <div class="section-title">Transactions</div>
+                    <div class="search-container">
+                        <input type="text" class="search-input" id="transaction-search" placeholder="Search transactions...">
+                    </div>
+                </div>
+                <div class="transaction-list" id="transaction-list">
+                </div>
+            </div>
+        </div>
+
+        <div class="window">
+            <div class="title-bar">
+                <span>Data Stuff</span>
+            </div>
+            <div class="window-body">
+                <div class="data-controls">
+                    <button class="button data-btn" id="export-btn">Export Data</button>
+                    <button class="button data-btn" id="import-btn">Import Data</button>
+                    <input type="file" id="import-input" accept=".bda" style="display: none;">
+                </div>
+                <button class="button delete-btn" id="purge-btn">PURGE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar" id="status-bar">Data saved to URL</div>
+
+    <!-- Income Popup -->
+    <div class="popup" id="income-popup">
+        <div class="popup-content">
+            <div class="window">
+                <div class="title-bar">
+                    <span id="income-popup-title">Add Income</span>
+                    <button class="close-button" id="close-income-popup">X</button>
+                </div>
+                <div class="window-body">
+                    <form id="income-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Title</label>
+                                <input type="text" class="form-control" id="income-title" required maxlength="30">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Amount ($)</label>
+                                <input type="number" class="form-control" id="income-amount" step="0.01" min="0" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Date & Time</label>
+                                <input type="datetime-local" class="form-control" id="income-time" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>From</label>
+                                <select class="form-control" id="income-from">
+                                    <option value="">Select source</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>To</label>
+                                <select class="form-control" id="income-to" required>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="income-repeating">
+                                    Repeat
+                                </label>
+                            </div>
+
+                            <div class="form-group form-grid-full" id="income-repeat-fields" style="display: none;">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Interval</label>
+                                        <select class="form-control" id="income-interval">
+                                            <option value="days">Days</option>
+                                            <option value="weeks">Weeks</option>
+                                            <option value="months">Months</option>
+                                            <option value="years">Years</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Frequency</label>
+                                        <input type="number" class="form-control" id="income-frequency" min="1" value="1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="text-align: center; margin-top: 20px;">
+                            <button type="submit" class="button" id="income-submit-btn">Add Income</button>
+                            <button type="button" class="button delete-btn" id="income-delete-btn" style="display: none;">Delete</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="popup" id="spending-popup">
+        <div class="popup-content">
+            <div class="window">
+                <div class="title-bar">
+                    <span id="spending-popup-title">Add Spending</span>
+                    <button class="close-button" id="close-spending-popup">X</button>
+                </div>
+                <div class="window-body">
+                    <form id="spending-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Title</label>
+                                <input type="text" class="form-control" id="spending-title" required maxlength="30">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Amount ($)</label>
+                                <input type="number" class="form-control" id="spending-amount" step="0.01" min="0" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Date & Time</label>
+                                <input type="datetime-local" class="form-control" id="spending-time" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>From</label>
+                                <select class="form-control" id="spending-from" required>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>To</label>
+                                <select class="form-control" id="spending-to">
+                                    <option value="">Select destination</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="spending-repeating">
+                                    Repeat
+                                </label>
+                            </div>
+
+                            <div class="form-group form-grid-full" id="spending-repeat-fields" style="display: none;">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Interval</label>
+                                        <select class="form-control" id="spending-interval">
+                                            <option value="days">Days</option>
+                                            <option value="weeks">Weeks</option>
+                                            <option value="months">Months</option>
+                                            <option value="years">Years</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Frequency</label>
+                                        <input type="number" class="form-control" id="spending-frequency" min="1" value="1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="text-align: center; margin-top: 20px;">
+                            <button type="submit" class="button" id="spending-submit-btn">Add Spending</button>
+                            <button type="button" class="button delete-btn" id="spending-delete-btn" style="display: none;">Delete</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="popup" id="balance-popup">
+        <div class="popup-content">
+            <div class="window">
+                <div class="title-bar">
+                    <span id="balance-popup-title">Create New Balance</span>
+                    <button class="close-button" id="close-balance-popup">X</button>
+                </div>
+                <div class="window-body">
+                    <form id="balance-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Balance Name</label>
+                                <input type="text" class="form-control" id="balance-name" required maxlength="30">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Color</label>
+                                <input type="color" class="form-control" id="balance-color" value="#3a86ff">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="text-align: center; margin-top: 20px;">
+                            <button type="submit" class="button" id="balance-submit-btn">Create Balance</button>
+                            <button type="button" class="button delete-btn" id="balance-delete-btn" style="display: none;">Delete</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="popup" id="transaction-details-popup">
+        <div class="popup-content">
+            <div class="window">
+                <div class="title-bar">
+                    <span>Transaction Details</span>
+                    <button class="close-button" id="close-details-popup">X</button>
+                </div>
+                <div class="window-body">
+                    <div id="transaction-details-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Popup -->
+    <div class="popup" id="confirmation-popup">
+        <div class="popup-content">
+            <div class="window">
+                <div class="title-bar">
+                    <span id="confirmation-title">Confirmation</span>
+                    <button class="close-button" id="close-confirmation-popup">X</button>
+                </div>
+                <div class="window-body">
+                    <p id="confirmation-message"></p>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="button" id="confirmation-yes-btn">Yes</button>
+                        <button class="button" id="confirmation-no-btn">No</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data structure
+        // balances: Array of balance objects with id, name, value, and color
+        // transactions: Array of transaction objects with details
+        let balances = [
+            { id: 'spendings', name: 'Spendings', value: 0, color: '#ff0000' },
+            { id: 'main', name: 'Income', value: 0, color: '#008000' }
+        ];
+
+        let transactions = [];
+
+        // Generate a unique ID for new balances and transactions
+        let nextId = () => 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+        // UI state variables
+        let activeBalanceId = null; // Currently selected balance for filtering
+        let searchQuery = '';       // Current search term for transactions
+        let saveTimer = null;       // Timer for auto-saving data
+        let lastSavedData = '';     // Last saved data to prevent unnecessary saves
+        let currentEditId = null;   // ID of transaction/balance being edited
+        let purgeTimer = null;      // Timer for PURGE confirmation delay
+
+        // DOM Elements
+        const incomeBtn = document.getElementById('income-btn');
+        const spendingBtn = document.getElementById('spending-btn');
+        const balanceBtn = document.getElementById('balance-btn');
+        const purgeBtn = document.getElementById('purge-btn');
+
+        const incomePopup = document.getElementById('income-popup');
+        const spendingPopup = document.getElementById('spending-popup');
+        const balancePopup = document.getElementById('balance-popup');
+        const transactionDetailsPopup = document.getElementById('transaction-details-popup');
+        const confirmationPopup = document.getElementById('confirmation-popup');
+
+        const incomeForm = document.getElementById('income-form');
+        const spendingForm = document.getElementById('spending-form');
+        const balanceForm = document.getElementById('balance-form');
+
+        const spendingsBalanceEl = document.getElementById('spendings-balance');
+        const mainBalanceEl = document.getElementById('main-balance');
+        const customBalancesContainer = document.getElementById('custom-balances-container');
+        const transactionList = document.getElementById('transaction-list');
+        const transactionSearch = document.getElementById('transaction-search');
+
+        const exportBtn = document.getElementById('export-btn');
+        const importBtn = document.getElementById('import-btn');
+        const importInput = document.getElementById('import-input');
+        const statusBar = document.getElementById('status-bar');
+
+        const confirmationTitle = document.getElementById('confirmation-title');
+        const confirmationMessage = document.getElementById('confirmation-message');
+        const confirmationYesBtn = document.getElementById('confirmation-yes-btn');
+        const confirmationNoBtn = document.getElementById('confirmation-no-btn');
+
+        // Initialize the application when the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load data from URL fragment
+            loadDataFromUrl();
+
+            // Set default datetime to current time
+            const now = new Date();
+            const formattedDate = now.toISOString().slice(0, 16);
+            document.getElementById('income-time').value = formattedDate;
+            document.getElementById('spending-time').value = formattedDate;
+
+            // Event Listeners for action buttons
+            incomeBtn.addEventListener('click', () => openPopup(incomePopup));
+            spendingBtn.addEventListener('click', () => openPopup(spendingPopup));
+            balanceBtn.addEventListener('click', () => openPopup(balancePopup));
+            purgeBtn.addEventListener('click', showPurgeConfirmation);
+
+            // Event Listeners for popup close buttons
+            document.getElementById('close-income-popup').addEventListener('click', closeAllPopups);
+            document.getElementById('close-spending-popup').addEventListener('click', closeAllPopups);
+            document.getElementById('close-balance-popup').addEventListener('click', closeAllPopups);
+            document.getElementById('close-details-popup').addEventListener('click', closeAllPopups);
+            document.getElementById('close-confirmation-popup').addEventListener('click', closeAllPopups);
+
+            // Close popups when clicking outside the content
+            document.querySelectorAll('.popup').forEach(popup => {
+                popup.addEventListener('click', (e) => {
+                    if (e.target === popup) closeAllPopups();
+                });
+            });
+
+            // Form submissions
+            incomeForm.addEventListener('submit', handleIncomeSubmit);
+            spendingForm.addEventListener('submit', handleSpendingSubmit);
+            balanceForm.addEventListener('submit', handleBalanceSubmit);
+
+            // Delete buttons
+            document.getElementById('income-delete-btn').addEventListener('click', () => showDeleteConfirmation('income'));
+            document.getElementById('spending-delete-btn').addEventListener('click', () => showDeleteConfirmation('spending'));
+            document.getElementById('balance-delete-btn').addEventListener('click', () => showDeleteConfirmation('balance'));
+
+            // Repeating toggles
+            document.getElementById('income-repeating').addEventListener('change', toggleIncomeRepeatFields);
+            document.getElementById('spending-repeating').addEventListener('change', toggleSpendingRepeatFields);
+
+            // Data controls
+            exportBtn.addEventListener('click', exportData);
+            importBtn.addEventListener('click', () => importInput.click());
+            importInput.addEventListener('change', importData);
+
+            // Search functionality
+            transactionSearch.addEventListener('input', (e) => {
+                searchQuery = e.target.value.toLowerCase();
+                renderTransactions();
+            });
+
+            // Start auto-save timer
+            startAutoSave();
+
+            // Initial render
+            updateBalances();
+            renderBalances();
+            renderTransactions();
+            populateBalanceSelects();
+        });
+
+        // Open a popup
+        function openPopup(popup) {
+            closeAllPopups();
+            popup.classList.add('active');
+        }
+
+        // Close all popups
+        function closeAllPopups() {
+            document.querySelectorAll('.popup').forEach(popup => {
+                popup.classList.remove('active');
+            });
+        }
+
+        // Toggle visibility of repeating transaction fields for income form
+        function toggleIncomeRepeatFields() {
+            const repeatFields = document.getElementById('income-repeat-fields');
+            const isChecked = document.getElementById('income-repeating').checked;
+            repeatFields.style.display = isChecked ? 'block' : 'none';
+        }
+
+        // Toggle visibility of repeating transaction fields for spending form
+        function toggleSpendingRepeatFields() {
+            const repeatFields = document.getElementById('spending-repeat-fields');
+            const isChecked = document.getElementById('spending-repeating').checked;
+            repeatFields.style.display = isChecked ? 'block' : 'none';
+        }
+
+        // Populate balance dropdowns in forms with current balances
+        function populateBalanceSelects() {
+            const incomeFromSelect = document.getElementById('income-from');
+            const incomeToSelect = document.getElementById('income-to');
+            const spendingFromSelect = document.getElementById('spending-from');
+            const spendingToSelect = document.getElementById('spending-to');
+
+            // Clear existing options
+            incomeFromSelect.innerHTML = '<option value="">Select source</option>';
+            incomeToSelect.innerHTML = '';
+            spendingFromSelect.innerHTML = '';
+            spendingToSelect.innerHTML = '<option value="">Select destination</option>';
+
+            // Add options for each balance (excluding spendings for income "to" and spending "from")
+            balances.forEach(balance => {
+                const option = document.createElement('option');
+                option.value = balance.id;
+                option.textContent = balance.name;
+
+                // For income "from" - optional field (all balances)
+                incomeFromSelect.appendChild(option.cloneNode(true));
+
+                // For income "to" - required field (all balances except spendings)
+                if (balance.id !== 'spendings') {
+                    incomeToSelect.appendChild(option.cloneNode(true));
+                }
+
+                // For spending "from" - required field (all balances except spendings)
+                if (balance.id !== 'spendings') {
+                    spendingFromSelect.appendChild(option.cloneNode(true));
+                }
+
+                // For spending "to" - optional field (all balances)
+                spendingToSelect.appendChild(option.cloneNode(true));
+            });
+        }
+
+        // Handle income form submission
+        function handleIncomeSubmit(e) {
+            e.preventDefault();
+
+            // Get form values
+            const title = document.getElementById('income-title').value.trim();
+            const amount = parseFloat(document.getElementById('income-amount').value);
+            const time = document.getElementById('income-time').value;
+            const from = document.getElementById('income-from').value;
+            const to = document.getElementById('income-to').value;
+            const isRepeating = document.getElementById('income-repeating').checked;
+            const interval = document.getElementById('income-interval').value;
+            const frequency = parseInt(document.getElementById('income-frequency').value);
+
+            // Validate required fields
+            if (!title || isNaN(amount) || amount <= 0 || !time || !to) {
+                alert('Please fill all required fields with valid values');
+                return;
+            }
+
+            if (currentEditId) {
+                // Update existing transaction
+                const transaction = transactions.find(t => t.id === currentEditId);
+                if (transaction) {
+                    transaction.title = title;
+                    transaction.amount = amount;
+                    transaction.time = time;
+                    transaction.from = from || null;
+                    transaction.to = to;
+                    transaction.isRepeating = isRepeating;
+                    transaction.interval = isRepeating ? interval : null;
+                    transaction.frequency = isRepeating ? frequency : null;
+                }
+            } else {
+                // Create new transaction
+                const transaction = {
+                    id: nextId(),
+                    type: 'income',
+                    title,
+                    amount,
+                    time,
+                    from: from || null,
+                    to,
+                    isRepeating,
+                    interval: isRepeating ? interval : null,
+                    frequency: isRepeating ? frequency : null
+                };
+
+                // Add to transactions array
+                transactions.push(transaction);
+            }
+
+            // Update balance values and UI
+            updateBalances();
+            renderTransactions();
+            closeAllPopups();
+
+            // Reset form and state
+            incomeForm.reset();
+            currentEditId = null;
+            document.getElementById('income-submit-btn').textContent = 'Add Income';
+            document.getElementById('income-delete-btn').style.display = 'none';
+
+            // Reset to current time
+            const now = new Date();
+            document.getElementById('income-time').value = now.toISOString().slice(0, 16);
+
+            // Trigger save
+            saveDataToUrl();
+        }
+
+        // Handle spending form submission
+        function handleSpendingSubmit(e) {
+            e.preventDefault();
+
+            // Get form values
+            const title = document.getElementById('spending-title').value.trim();
+            const amount = parseFloat(document.getElementById('spending-amount').value);
+            const time = document.getElementById('spending-time').value;
+            const from = document.getElementById('spending-from').value;
+            const to = document.getElementById('spending-to').value;
+            const isRepeating = document.getElementById('spending-repeating').checked;
+            const interval = document.getElementById('spending-interval').value;
+            const frequency = parseInt(document.getElementById('spending-frequency').value);
+
+            // Validate required fields
+            if (!title || isNaN(amount) || amount <= 0 || !time || !from) {
+                alert('Please fill all required fields with valid values');
+                return;
+            }
+
+            if (currentEditId) {
+                // Update existing transaction
+                const transaction = transactions.find(t => t.id === currentEditId);
+                if (transaction) {
+                    transaction.title = title;
+                    transaction.amount = amount;
+                    transaction.time = time;
+                    transaction.from = from;
+                    transaction.to = to || null;
+                    transaction.isRepeating = isRepeating;
+                    transaction.interval = isRepeating ? interval : null;
+                    transaction.frequency = isRepeating ? frequency : null;
+                }
+            } else {
+                // Create new transaction
+                const transaction = {
+                    id: nextId(),
+                    type: 'spending',
+                    title,
+                    amount,
+                    time,
+                    from,
+                    to: to || null,
+                    isRepeating,
+                    interval: isRepeating ? interval : null,
+                    frequency: isRepeating ? frequency : null
+                };
+
+                // Add to transactions array
+                transactions.push(transaction);
+            }
+
+            // Update balance values and UI
+            updateBalances();
+            renderTransactions();
+            closeAllPopups();
+
+            // Reset form and state
+            spendingForm.reset();
+            currentEditId = null;
+            document.getElementById('spending-submit-btn').textContent = 'Add Spending';
+            document.getElementById('spending-delete-btn').style.display = 'none';
+
+            // Reset to current time
+            const now = new Date();
+            document.getElementById('spending-time').value = now.toISOString().slice(0, 16);
+
+            // Trigger save
+            saveDataToUrl();
+        }
+
+        // Handle balance form submission
+        function handleBalanceSubmit(e) {
+            e.preventDefault();
+
+            // Get form values
+            const name = document.getElementById('balance-name').value.trim();
+            const color = document.getElementById('balance-color').value;
+
+            // Validate required fields
+            if (!name) {
+                alert('Please enter a balance name');
+                return;
+            }
+
+            if (currentEditId) {
+                // Update existing balance
+                const balance = balances.find(b => b.id === currentEditId);
+                if (balance) {
+                    balance.name = name;
+                    balance.color = color;
+                }
+            } else {
+                // Create new balance
+                const balance = {
+                    id: nextId(),
+                    name,
+                    value: 0,
+                    color
+                };
+
+                // Add to balances array
+                balances.push(balance);
+            }
+
+            // Update UI
+            renderBalances();
+            populateBalanceSelects();
+            closeAllPopups();
+
+            // Reset form and state
+            balanceForm.reset();
+            currentEditId = null;
+            document.getElementById('balance-submit-btn').textContent = 'Create Balance';
+            document.getElementById('balance-delete-btn').style.display = 'none';
+
+            // Trigger save
+            saveDataToUrl();
+        }
+
+        // Update balance values based on transactions
+        function updateBalances() {
+            // Reset all balances to 0
+            balances.forEach(balance => balance.value = 0);
+
+            // Process each transaction to update balance values
+            transactions.forEach(transaction => {
+                if (transaction.type === 'income') {
+                    // Add income to destination balance
+                    const balance = balances.find(b => b.id === transaction.to);
+                    if (balance) balance.value += transaction.amount;
+
+                    // Add to spendings balance
+                    const spendingsBalance = balances.find(b => b.id === 'spendings');
+                    if (spendingsBalance) spendingsBalance.value += transaction.amount;
+                } else if (transaction.type === 'spending') {
+                    // Subtract spending from source balance
+                    const balance = balances.find(b => b.id === transaction.from);
+                    if (balance) balance.value -= transaction.amount;
+
+                    // Add to spendings balance
+                    const spendingsBalance = balances.find(b => b.id === 'spendings');
+                    if (spendingsBalance) spendingsBalance.value += transaction.amount;
+                }
+            });
+
+            // Update display
+            renderBalances();
+        }
+
+        // Render all balance cards
+        function renderBalances() {
+            // Update default balances
+            const spendingsBalance = balances.find(b => b.id === 'spendings');
+            const mainBalance = balances.find(b => b.id === 'main');
+
+            if (spendingsBalance) {
+                spendingsBalanceEl.textContent = `$${spendingsBalance.value.toFixed(2)}`;
+            }
+
+            if (mainBalance) {
+                mainBalanceEl.textContent = `$${mainBalance.value.toFixed(2)}`;
+            }
+
+            // Render custom balances
+            customBalancesContainer.innerHTML = '';
+            balances.filter(b => b.id !== 'spendings' && b.id !== 'main').forEach(balance => {
+                const card = document.createElement('div');
+                card.className = `balance-card custom ${activeBalanceId === balance.id ? 'active' : ''}`;
+                card.style.borderLeftColor = balance.color;
+                card.dataset.id = balance.id;
+
+                card.innerHTML = `
+                    <div class="balance-name">${balance.name}</div>
+                    <div class="balance-amount">$${balance.value.toFixed(2)}</div>
+                    <button class="button edit-btn" data-id="${balance.id}" style="position: absolute; top: 5px; right: 5px;">Edit</button>
+                `;
+
+                // Add click event to filter transactions by this balance
+                card.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('edit-btn')) return;
+                    activeBalanceId = activeBalanceId === balance.id ? null : balance.id;
+                    renderBalances();
+                    renderTransactions();
+                });
+
+                // Add edit button event
+                card.querySelector('.edit-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    editBalance(balance.id);
+                });
+
+                customBalancesContainer.appendChild(card);
+            });
+
+            // Add click events to default balances
+            document.querySelector('.balance-card.spendings').addEventListener('click', (e) => {
+                if (e.target.classList.contains('edit-btn')) return;
+                activeBalanceId = activeBalanceId === 'spendings' ? null : 'spendings';
+                renderBalances();
+                renderTransactions();
+            });
+
+            document.querySelector('.balance-card.main').addEventListener('click', (e) => {
+                if (e.target.classList.contains('edit-btn')) return;
+                activeBalanceId = activeBalanceId === 'main' ? null : 'main';
+                renderBalances();
+                renderTransactions();
+            });
+
+            // Add edit buttons to default balances
+            const spendingsCard = document.querySelector('.balance-card.spendings');
+            const mainCard = document.querySelector('.balance-card.main');
+
+            if (!spendingsCard.querySelector('.edit-btn')) {
+                const editBtn = document.createElement('button');
+                editBtn.className = 'button edit-btn';
+                editBtn.textContent = 'Edit';
+                editBtn.style.position = 'absolute';
+                editBtn.style.top = '5px';
+                editBtn.style.right = '5px';
+                editBtn.dataset.id = 'spendings';
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // Prevent editing default balances
+                    alert('Cannot edit default balances');
+                });
+                spendingsCard.appendChild(editBtn);
+            }
+
+            if (!mainCard.querySelector('.edit-btn')) {
+                const editBtn = document.createElement('button');
+                editBtn.className = 'button edit-btn';
+                editBtn.textContent = 'Edit';
+                editBtn.style.position = 'absolute';
+                editBtn.style.top = '5px';
+                editBtn.style.right = '5px';
+                editBtn.dataset.id = 'main';
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // Prevent editing default balances
+                    alert('Cannot edit default balances');
+                });
+                mainCard.appendChild(editBtn);
+            }
+        }
+
+        // Render transaction list with filtering and search
+        function renderTransactions() {
+            transactionList.innerHTML = '';
+
+            // Filter transactions based on active balance and search query
+            let filteredTransactions = transactions;
+
+            // Filter by active balance if one is selected
+            if (activeBalanceId) {
+                filteredTransactions = transactions.filter(t =>
+                    (t.type === 'income' && (t.to === activeBalanceId || t.from === activeBalanceId)) ||
+                    (t.type === 'spending' && (t.from === activeBalanceId || t.to === activeBalanceId))
+                );
+            }
+
+            // Filter by search query if present
+            if (searchQuery) {
+                filteredTransactions = filteredTransactions.filter(t =>
+                    t.title.toLowerCase().includes(searchQuery)
+                );
+            }
+
+            // Show message if no transactions match filters
+            if (filteredTransactions.length === 0) {
+                const message = document.createElement('div');
+                message.className = 'no-transactions';
+                message.textContent = activeBalanceId
+                    ? 'No transactions for this balance'
+                    : (searchQuery ? 'No matching transactions found' : 'No transactions yet. Add your first transaction!');
+                transactionList.appendChild(message);
+                return;
+            }
+
+            // Sort transactions by date (newest first)
+            const sortedTransactions = [...filteredTransactions].sort((a, b) =>
+                new Date(b.time) - new Date(a.time)
+            );
+
+            // Render each transaction
+            sortedTransactions.forEach(transaction => {
+                const item = document.createElement('div');
+                item.className = `transaction-item transaction-${transaction.type}`;
+                item.dataset.id = transaction.id;
+
+                const date = new Date(transaction.time);
+                const formattedDate = date.toLocaleDateString();
+                const formattedTime = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+                item.innerHTML = `
+                    <div class="transaction-details">
+                        <div class="transaction-title">${transaction.title}</div>
+                        <div class="transaction-meta">
+                            ${formattedDate} at ${formattedTime}
+                            ${transaction.from ? `From: ${balances.find(b => b.id === transaction.from)?.name || transaction.from}` : ''}
+                            ${transaction.to ? `To: ${balances.find(b => b.id === transaction.to)?.name || transaction.to}` : ''}
+                            ${transaction.isRepeating ? ` | Repeats every ${transaction.frequency} ${transaction.interval}` : ''}
+                        </div>
+                    </div>
+                    <div class="transaction-amount ${transaction.type}-amount">
+                        ${transaction.type === 'income' ? '+' : '-'}$${transaction.amount.toFixed(2)}
+                    </div>
+                    <button class="button edit-btn" data-id="${transaction.id}">Edit</button>
+                `;
+
+                // Add click event to show transaction details
+                item.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('edit-btn')) return;
+                    showTransactionDetails(transaction.id);
+                });
+
+                // Add edit button event
+                item.querySelector('.edit-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    editTransaction(transaction.id);
+                });
+
+                transactionList.appendChild(item);
+            });
+        }
+
+        // Edit an existing transaction
+        function editTransaction(id) {
+            const transaction = transactions.find(t => t.id === id);
+            if (!transaction) return;
+
+            currentEditId = id;
+
+            if (transaction.type === 'income') {
+                // Populate form with transaction data
+                document.getElementById('income-title').value = transaction.title;
+                document.getElementById('income-amount').value = transaction.amount;
+                document.getElementById('income-time').value = transaction.time;
+                document.getElementById('income-from').value = transaction.from || '';
+                document.getElementById('income-to').value = transaction.to;
+                document.getElementById('income-repeating').checked = transaction.isRepeating;
+                document.getElementById('income-interval').value = transaction.interval || 'days';
+                document.getElementById('income-frequency').value = transaction.frequency || 1;
+
+                // Show/hide repeat fields
+                toggleIncomeRepeatFields();
+
+                // Update UI for editing
+                document.getElementById('income-popup-title').textContent = 'Edit Income';
+                document.getElementById('income-submit-btn').textContent = 'Confirm';
+                document.getElementById('income-delete-btn').style.display = 'inline-block';
+
+                // Open popup
+                openPopup(incomePopup);
+            } else if (transaction.type === 'spending') {
+                // Populate form with transaction data
+                document.getElementById('spending-title').value = transaction.title;
+                document.getElementById('spending-amount').value = transaction.amount;
+                document.getElementById('spending-time').value = transaction.time;
+                document.getElementById('spending-from').value = transaction.from;
+                document.getElementById('spending-to').value = transaction.to || '';
+                document.getElementById('spending-repeating').checked = transaction.isRepeating;
+                document.getElementById('spending-interval').value = transaction.interval || 'days';
+                document.getElementById('spending-frequency').value = transaction.frequency || 1;
+
+                // Show/hide repeat fields
+                toggleSpendingRepeatFields();
+
+                // Update UI for editing
+                document.getElementById('spending-popup-title').textContent = 'Edit Spending';
+                document.getElementById('spending-submit-btn').textContent = 'Confirm';
+                document.getElementById('spending-delete-btn').style.display = 'inline-block';
+
+                // Open popup
+                openPopup(spendingPopup);
+            }
+        }
+
+        // Edit an existing balance
+        function editBalance(id) {
+            // Prevent editing default balances
+            if (id === 'spendings' || id === 'main') {
+                alert('Cannot edit default balances');
+                return;
+            }
+
+            const balance = balances.find(b => b.id === id);
+            if (!balance) return;
+
+            currentEditId = id;
+
+            // Populate form with balance data
+            document.getElementById('balance-name').value = balance.name;
+            document.getElementById('balance-color').value = balance.color;
+
+            // Update UI for editing
+            document.getElementById('balance-popup-title').textContent = 'Edit Balance';
+            document.getElementById('balance-submit-btn').textContent = 'Confirm';
+            document.getElementById('balance-delete-btn').style.display = 'inline-block';
+
+            // Open popup
+            openPopup(balancePopup);
+        }
+
+        // Show transaction details
+        function showTransactionDetails(id) {
+            const transaction = transactions.find(t => t.id === id);
+            if (!transaction) return;
+
+            const date = new Date(transaction.time);
+            const formattedDate = date.toLocaleDateString();
+            const formattedTime = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+            let detailsHTML = `
+                <h3>${transaction.title}</h3>
+                <p><strong>Type:</strong> ${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}</p>
+                <p><strong>Amount:</strong> $${transaction.amount.toFixed(2)}</p>
+                <p><strong>Date:</strong> ${formattedDate}</p>
+                <p><strong>Time:</strong> ${formattedTime}</p>
+            `;
+
+            if (transaction.from) {
+                const fromBalance = balances.find(b => b.id === transaction.from);
+                detailsHTML += `<p><strong>From:</strong> ${fromBalance ? fromBalance.name : transaction.from}</p>`;
+            }
+
+            if (transaction.to) {
+                const toBalance = balances.find(b => b.id === transaction.to);
+                detailsHTML += `<p><strong>To:</strong> ${toBalance ? toBalance.name : transaction.to}</p>`;
+            }
+
+            if (transaction.isRepeating) {
+                detailsHTML += `<p><strong>Repeating:</strong> Every ${transaction.frequency} ${transaction.interval}</p>`;
+            }
+
+            document.getElementById('transaction-details-content').innerHTML = detailsHTML;
+            openPopup(transactionDetailsPopup);
+        }
+
+        // Show delete confirmation
+        function showDeleteConfirmation(type) {
+            confirmationTitle.textContent = 'Are you sure?';
+            confirmationMessage.textContent = 'This action cannot be undone.';
+
+            confirmationYesBtn.textContent = 'Pretty sure';
+            confirmationNoBtn.textContent = 'No';
+
+            confirmationYesBtn.onclick = () => {
+                if (type === 'income' || type === 'spending') {
+                    deleteTransaction(currentEditId);
+                } else if (type === 'balance') {
+                    deleteBalance(currentEditId);
+                }
+                closeAllPopups();
+            };
+
+            confirmationNoBtn.onclick = closeAllPopups;
+
+            openPopup(confirmationPopup);
+        }
+
+        // Delete a transaction
+        function deleteTransaction(id) {
+            transactions = transactions.filter(t => t.id !== id);
+            updateBalances();
+            renderTransactions();
+            saveDataToUrl();
+        }
+
+        // Delete a balance
+        function deleteBalance(id) {
+            // Prevent deletion of default balances
+            if (id === 'spendings' || id === 'main') {
+                alert('Cannot delete default balances');
+                return;
+            }
+
+            balances = balances.filter(b => b.id !== id);
+
+            // Remove transactions associated with this balance
+            transactions = transactions.filter(t =>
+                t.from !== id && t.to !== id
+            );
+
+            updateBalances();
+            renderBalances();
+            renderTransactions();
+            populateBalanceSelects();
+            saveDataToUrl();
+        }
+
+        // Show PURGE confirmation
+        function showPurgeConfirmation() {
+            confirmationTitle.textContent = 'Delete everything?';
+            confirmationMessage.textContent = 'This will delete all data permanently.';
+
+            confirmationYesBtn.textContent = 'Yes';
+            confirmationNoBtn.textContent = 'No';
+
+            confirmationYesBtn.onclick = () => {
+                showPurgeFinalConfirmation();
+            };
+
+            confirmationNoBtn.onclick = closeAllPopups;
+
+            openPopup(confirmationPopup);
+        }
+
+        // Show final PURGE confirmation with delay
+        function showPurgeFinalConfirmation() {
+            confirmationTitle.textContent = 'Are you sure?';
+            confirmationMessage.textContent = 'This action cannot be undone. Data will be permanently deleted.';
+
+            confirmationYesBtn.textContent = 'Pretty sure';
+            confirmationNoBtn.textContent = 'Nevermind';
+
+            // Disable the yes button for 5 seconds
+            confirmationYesBtn.classList.add('disabled');
+            confirmationYesBtn.disabled = true;
+
+            let countdown = 5;
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    confirmationYesBtn.classList.remove('disabled');
+                    confirmationYesBtn.disabled = false;
+                }
+            }, 1000);
+
+            confirmationYesBtn.onclick = () => {
+                if (!confirmationYesBtn.disabled) {
+                    purgeAllData();
+                    closeAllPopups();
+                }
+            };
+
+            confirmationNoBtn.onclick = closeAllPopups;
+
+            openPopup(confirmationPopup);
+        }
+
+        // Purge all data
+        function purgeAllData() {
+            // Reset data structures
+            balances = [
+                { id: 'spendings', name: 'Spendings', value: 0, color: '#ff0000' },
+                { id: 'main', name: 'Income', value: 0, color: '#008000' }
+            ];
+
+            transactions = [];
+            activeBalanceId = null;
+            searchQuery = '';
+            transactionSearch.value = '';
+
+            // Clear URL fragment
+            window.location.hash = '';
+
+            // Update UI
+            updateBalances();
+            renderBalances();
+            renderTransactions();
+            populateBalanceSelects();
+
+            // Show status
+            showStatusBar('All data deleted');
+        }
+
+        // Export data to a .bda file
+        function exportData() {
+            // Get current data from URL fragment
+            const data = window.location.hash.substring(1);
+
+            if (!data) {
+                alert('No data to export');
+                return;
+            }
+
+            // Create file with proper naming convention
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // Convert 0 to 12
+            const formattedHours = String(hours).padStart(2, '0');
+
+            const filename = `Data ${day}/${month}/${year} ${formattedHours}:${minutes} ${ampm}.bda`;
+
+            // Create and download file
+            const blob = new Blob([data], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Import data from a .bda file
+        function importData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Check file extension
+            if (!file.name.toLowerCase().endsWith('.bda')) {
+                alert('Please select a .bda file');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+
+                    // Set URL fragment to imported data
+                    window.location.hash = content;
+
+                    // Reload page to apply data
+                    window.location.reload();
+                } catch (error) {
+                    console.error(error);
+                    alert('Error importing data. Please check the file format.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Save data to URL fragment for persistence
+        function saveDataToUrl() {
+            const data = {
+                balances,
+                transactions
+            };
+
+            // Convert data to JSON and compress with base64
+            const jsonData = JSON.stringify(data);
+            const compressedData = btoa(encodeURIComponent(jsonData));
+
+            // Only save if data has changed
+            if (compressedData !== lastSavedData) {
+                window.location.hash = compressedData;
+                lastSavedData = compressedData;
+                showStatusBar();
+            }
+        }
+
+        // Load data from URL fragment
+        function loadDataFromUrl() {
+            if (window.location.hash) {
+                try {
+                    // Decompress and parse data from URL fragment
+                    const compressedData = window.location.hash.substring(1);
+                    const jsonData = decodeURIComponent(atob(compressedData));
+                    const data = JSON.parse(jsonData);
+
+                    // Update data structures if valid
+                    if (data.balances && data.transactions) {
+                        balances = data.balances;
+                        transactions = data.transactions;
+                        lastSavedData = compressedData;
+                    }
+                } catch (e) {
+                    console.error('Error loading data from URL:', e);
+                }
+            }
+        }
+
+        // Start auto-save timer (saves every 10 seconds)
+        function startAutoSave() {
+            // Clear any existing timer
+            if (saveTimer) {
+                clearInterval(saveTimer);
+            }
+
+            // Save every 10 seconds
+            saveTimer = setInterval(() => {
+                saveDataToUrl();
+            }, 10000);
+        }
+
+        // Show status bar notification
+        function showStatusBar(message = 'Data saved to URL') {
+            statusBar.textContent = message;
+            statusBar.classList.add('visible');
+            setTimeout(() => {
+                statusBar.classList.remove('visible');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
