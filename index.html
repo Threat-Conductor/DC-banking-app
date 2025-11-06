@@ -1014,9 +1014,6 @@
                     const balance = balances.find(b => b.id === transaction.to);
                     if (balance) balance.value += transaction.amount;
 
-                    // Add to spendings balance
-                    const spendingsBalance = balances.find(b => b.id === 'spendings');
-                    if (spendingsBalance) spendingsBalance.value += transaction.amount;
                 } else if (transaction.type === 'spending') {
                     // Subtract spending from source balance
                     const balance = balances.find(b => b.id === transaction.from);
