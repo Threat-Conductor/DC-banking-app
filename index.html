@@ -1002,7 +1002,7 @@
             saveDataToUrl();
         }
 
-        // Update balance values based on transactions
+        /// Update balance values based on transactions
         function updateBalances() {
             // Reset all balances to 0
             balances.forEach(balance => balance.value = 0);
@@ -1023,15 +1023,22 @@
                     const fromBalance = balances.find(b => b.id === transaction.from);
                     if (fromBalance) fromBalance.value -= transaction.amount;
 
-                    // Add to spendings balance
+                    // Add to spendings balance (tracking total spending)
                     const spendingsBalance = balances.find(b => b.id === 'spendings');
                     if (spendingsBalance) spendingsBalance.value += transaction.amount;
+
+                    // ALSO add to destination balance if specified
+                    if (transaction.to) {
+                        const toBalance = balances.find(b => b.id === transaction.to);
+                        if (toBalance) toBalance.value += transaction.amount;
+                    }
                 }
             });
 
             // Update display
             renderBalances();
         }
+
 
 
 
