@@ -1010,14 +1010,18 @@
             // Process each transaction to update balance values
             transactions.forEach(transaction => {
                 if (transaction.type === 'income') {
-                    // Add income to destination balance
-                    const balance = balances.find(b => b.id === transaction.to);
-                    if (balance) balance.value += transaction.amount;
-
+                    // If it's a transfer (has a "from" balance), subtract from that balance
+                    if (transaction.from) {
+                        const fromBalance = balances.find(b => b.id === transaction.from);
+                        if (fromBalance) fromBalance.value -= transaction.amount;
+                    }
+                    // Add to destination balance
+                    const toBalance = balances.find(b => b.id === transaction.to);
+                    if (toBalance) toBalance.value += transaction.amount;
                 } else if (transaction.type === 'spending') {
                     // Subtract spending from source balance
-                    const balance = balances.find(b => b.id === transaction.from);
-                    if (balance) balance.value -= transaction.amount;
+                    const fromBalance = balances.find(b => b.id === transaction.from);
+                    if (fromBalance) fromBalance.value -= transaction.amount;
 
                     // Add to spendings balance
                     const spendingsBalance = balances.find(b => b.id === 'spendings');
@@ -1028,6 +1032,8 @@
             // Update display
             renderBalances();
         }
+
+
 
         // Render all balance cards
         function renderBalances() {
