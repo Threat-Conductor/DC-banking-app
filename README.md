@@ -1,1 +1,2 @@
 # DC-banking-app
+Licensed under the European Union Public License 1.2
