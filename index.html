@@ -1001,6 +1001,10 @@
             // Trigger save
             saveDataToUrl();
         }
+        // Format number with commas
+        function formatNumber(num) {
+            return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
 
         /// Update balance values based on transactions
         function updateBalances() {
@@ -1049,11 +1053,11 @@
             const mainBalance = balances.find(b => b.id === 'main');
 
             if (spendingsBalance) {
-                spendingsBalanceEl.textContent = `$${spendingsBalance.value.toFixed(2)}`;
+                spendingsBalanceEl.textContent = `$${formatNumber(spendingsBalance.value)}`;
             }
 
             if (mainBalance) {
-                mainBalanceEl.textContent = `$${mainBalance.value.toFixed(2)}`;
+                mainBalanceEl.textContent = `$${formatNumber(mainBalance.value)}`;
             }
 
             // Render custom balances
@@ -1066,7 +1070,7 @@
 
                 card.innerHTML = `
                     <div class="balance-name">${balance.name}</div>
-                    <div class="balance-amount">$${balance.value.toFixed(2)}</div>
+                    <div class="balance-amount">$${formatNumber(balance.value)}</div>
                     <button class="button edit-btn" data-id="${balance.id}" style="position: absolute; top: 5px; right: 5px;">Edit</button>
                 `;
 
@@ -1139,6 +1143,7 @@
             }
         }
 
+
         // Render transaction list with filtering and search
         function renderTransactions() {
             transactionList.innerHTML = '';
@@ -1198,7 +1203,7 @@
                         </div>
                     </div>
                     <div class="transaction-amount ${transaction.type}-amount">
-                        ${transaction.type === 'income' ? '+' : '-'}$${transaction.amount.toFixed(2)}
+                        ${transaction.type === 'income' ? '+' : '-'}$${formatNumber(transaction.amount)}
                     </div>
                     <button class="button edit-btn" data-id="${transaction.id}">Edit</button>
                 `;
@@ -1218,6 +1223,7 @@
                 transactionList.appendChild(item);
             });
         }
+
 
         // Edit an existing transaction
         function editTransaction(id) {
@@ -1309,7 +1315,7 @@
             let detailsHTML = `
                 <h3>${transaction.title}</h3>
                 <p><strong>Type:</strong> ${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}</p>
-                <p><strong>Amount:</strong> $${transaction.amount.toFixed(2)}</p>
+                <p><strong>Amount:</strong> $${formatNumber(transaction.amount)}</p>
                 <p><strong>Date:</strong> ${formattedDate}</p>
                 <p><strong>Time:</strong> ${formattedTime}</p>
             `;
@@ -1331,6 +1337,7 @@
             document.getElementById('transaction-details-content').innerHTML = detailsHTML;
             openPopup(transactionDetailsPopup);
         }
+
 
         // Show delete confirmation
         function showDeleteConfirmation(type) {
